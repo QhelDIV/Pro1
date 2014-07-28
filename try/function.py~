@@ -1,0 +1,6 @@
+from header import header
+from footer import footer
+class render():
+	def rend(self,mid):
+		return header+mid+footer
+
