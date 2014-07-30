@@ -1,0 +1,4 @@
+from function import render
+instant=render();
+instant.create("<p>I can eat glass without getting hurt</p>")
+
