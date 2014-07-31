@@ -1,6 +1,8 @@
 import tornado.ioloop
 import tornado.web
 import function
+import torndb
+import _mysql
 from login_form import login_form
 class BaseHandler(tornado.web.RequestHandler):
 	def get_current_username(self):
@@ -27,6 +29,13 @@ class LogoutHandler(BaseHandler):
 		self.clear_cookie("username")
 		self.redirect("/login")
 
+class RegisterHandler(BaseHandler):
+	def get(self):
+		self.write(function.render(register_form))
+	def post(self):
+		self.set_secure_cookie("username", self.get_argument("username"))
+		self.redirect("/login")
+		
 class FileHandler(BaseHandler):
 	def get(self,p1):
 		try:
@@ -35,15 +44,18 @@ class FileHandler(BaseHandler):
 				self.write(data)
 			self.finish()
 		except IOError:
+			self.send_error(404)
 			print "File not found!"
 
 application = tornado.web.Application([
 (r"/", MainHandler),
 (r"/login", LoginHandler),
 (r"/logout",LogoutHandler),
+(r"/register",RegisterHandler),
 (r"/(.*)",FileHandler),
 ], cookie_secret="63925114")
 # This is the phone number of number 5304 room in Henan Experimental highschool
 if __name__ == '__main__':
+	db=_mysql.connect()
 	application.listen(8888)
 	tornado.ioloop.IOLoop.instance().start()
