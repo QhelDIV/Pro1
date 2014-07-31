@@ -1,5 +1,5 @@
-login_form="""
-<form action="/login" method="post">
+login_form="""<form action="/login" method="post">
+    <fieldset>
         <div class="form-group">
             <input autofocus class="form-control" name="username" placeholder="Username" type="text"/>
         </div>
@@ -9,6 +9,7 @@ login_form="""
         <div class="form-group">
             <button type="submit" class="btn btn-default">Log In</button>
         </div>
+    </fieldset>
 </form>
 <div>
     or <a href="/register">register</a> for an account
