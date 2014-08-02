@@ -2,60 +2,72 @@ import tornado.ioloop
 import tornado.web
 import function
 import torndb
-import _mysql
+import torndb
+import mysql_config
 from login_form import login_form
 class BaseHandler(tornado.web.RequestHandler):
-	def get_current_username(self):
-		return self.get_secure_cookie("username")
+    def get_current_username(self):
+        return self.get_secure_cookie("username")
 
 class MainHandler(BaseHandler):
-	def get(self):
-		self.current_username=self.get_current_username()
-		if not self.current_username:
-			self.redirect("/login")
-			return
-	#	name = tornado.escape.xhtml_escape(current_username)
-		self.write("<p>Hello, " + self.current_username+"</p <br> <a href='/logout'>log out</a>")
+    def get(self):
+  #      for user in db.query("SELECT * FROM Users"):
+   #         self.write(user.Password)
+        self.current_username=self.get_current_username()
+        if not self.current_username:
+            self.redirect("/login")
+            return
+        name = tornado.escape.xhtml_escape(current_username)
+        self.write("<p>Hello, " + self.current_username+"</p <br> <a href='/logout'>log out</a>")
 
 class LoginHandler(BaseHandler):
-	def get(self):
-		self.write(function.render(login_form))
-	def post(self):
-		self.set_secure_cookie("username", self.get_argument("username"))
-		self.redirect("/")
+    def get(self):
+        self.write(function.render(login_form))
+    def post(self):
+        self.set_secure_cookie("username", self.get_argument("username"))
+        self.redirect("/")
 
 class LogoutHandler(BaseHandler):
-	def get(self):
-		self.clear_cookie("username")
-		self.redirect("/login")
+    def get(self):
+        self.clear_cookie("username")
+        self.redirect("/login")
 
 class RegisterHandler(BaseHandler):
-	def get(self):
-		self.write(function.render(register_form))
-	def post(self):
-		self.set_secure_cookie("username", self.get_argument("username"))
-		self.redirect("/login")
-		
+    def get(self):
+        self.write(function.render(register_form))
+    def post(self):
+        self.set_secure_cookie("username", self.get_argument("username"))
+        self.redirect("/login")
+        
 class FileHandler(BaseHandler):
-	def get(self,p1):
-		try:
-			with open(r'/home/qheldiv/Documents/Pro1/all/'+str(p1),'rb') as f:
-				data=f.read()
-				self.write(data)
-			self.finish()
-		except IOError:
-			self.send_error(404)
-			print "File not found!"
-
-application = tornado.web.Application([
-(r"/", MainHandler),
-(r"/login", LoginHandler),
-(r"/logout",LogoutHandler),
-(r"/register",RegisterHandler),
-(r"/(.*)",FileHandler),
-], cookie_secret="63925114")
+    def get(self,p1):
+        try:
+            with open(r'/home/qheldiv/Documents/Pro1/all/'+str(p1),'rb') as f:
+                data=f.read()
+                self.write(data)
+            self.finish()
+        except IOError:
+            self.send_error(404)
+            print "File not found!!!!!!!!!!"
+class Application(tornado.web.Application):
+    def __init__(self):
+        handlers= [
+            (r"/", MainHandler),
+            (r"/login", LoginHandler),
+            (r"/logout",LogoutHandler),
+            (r"/register",RegisterHandler),
+            (r"/(.*)",FileHandler),
+            ]
+            settings = {
+                'cookie_secret':"63925114"
+            }
 # This is the phone number of number 5304 room in Henan Experimental highschool
 if __name__ == '__main__':
-	db=_mysql.connect()
-	application.listen(8888)
-	tornado.ioloop.IOLoop.instance().start()
+    http_server = tornado.httpserver.HTTPServer(Application())
+    http_server.listen(8888)
+    #dab = torndb.Connection(host=mysql_config.host+":"+str(mysql_config.port),
+    #                       database=mysql_config.database,
+    #                       user=mysql_config.user,
+    #                       password=mysql_config.password,
+    #                       )
+    tornado.ioloop.IOLoop.instance().start()
