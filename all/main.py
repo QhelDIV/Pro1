@@ -1,22 +1,18 @@
 import sys
+import time
 import torndb
 import function
 import tornado.web
 import mysql_config
 import tornado.ioloop
 from login_form import login_form
+from register_form import register_form
 class BaseHandler(tornado.web.RequestHandler):
-    def __init__(self, application, request, **kwargs):
-       tornado.web.RequestHandler.__init__(self,application, request, **kwargs)
-       if self.get_secure_cookie("username"):
-            self.redirect("/login")
     def get_current_username(self):
         return self.get_secure_cookie("username")
 
 class MainHandler(BaseHandler):
     def get(self):
-        for user in db.query("SELECT * FROM Users"):
-            self.write(user.Password)
         self.current_username=self.get_current_username()
         if not self.current_username:
             self.redirect("/login")
@@ -25,11 +21,18 @@ class MainHandler(BaseHandler):
         self.write("<p>Hello, " + self.current_username+"</p <br> <a href='/logout'>log out</a>")
 
 class LoginHandler(BaseHandler):
-    def __init__(self):
-        nothing='nothing'
     def get(self):
         self.write(function.render(login_form))
     def post(self):
+        request_name=self.get_argument('username')
+        query_result=db.query("SELECT * FROM Users WHERE BINARY Username='"+str(request_name)+"'")
+        print query_result
+        if len(query_result)==0 or query_result[0]['Password']!=self.get_argument('password') :
+            print "username or password invalid"
+            self.write(function.render("<p><a href='/login'>Invalid Username or password~.~click to go back to login page~.~</a></p>"))
+            self.finish()
+            return
+        print "OOOKKK"
         self.set_secure_cookie("username", self.get_argument("username"))
         self.redirect("/")
 
@@ -42,6 +45,27 @@ class RegisterHandler(BaseHandler):
     def get(self):
         self.write(function.render(register_form))
     def post(self):
+        Error_Massege='NONE'
+        request_name=self.get_argument('username')
+        query_result=db.query("SELECT * FROM Users WHERE BINARY Username='"+str(request_name)+"'")
+        print "registering: "+str(query_result)
+        print len(query_result)
+        if len(query_result)!=0 or not self.get_argument('username'):
+            Error_Massege='That username is unacceptable @_@'
+            print "NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+        elif self.get_argument('password')!=self.get_argument('confirm'):
+            Error_Massege='Passwords do not match'
+        elif len(self.get_argument('password'))==0:
+            Error_Massege="That password is unacceptable :)"
+        if Error_Massege!='NONE':
+            print "encounter error when registing:"+Error_Massege
+            self.write(function.render("<p><a href='/register'>"+Error_Massege+" click to return to register page@_@"+"</a></p>"))
+            self.finish()
+            return
+        print "no error when registering"
+        Getarg=self.get_argument
+        print "INSERT INTO Users (Username,Password,Gender,ID) VALUES ('{0}','{1}','{2}',{3})".format(Getarg('username'),Getarg('password'),'male',0)
+        db.execute("INSERT INTO Users VALUES ('{0}','{1}','{2}',{3})".format(Getarg('username'),Getarg('password'),'male',0))
         self.set_secure_cookie("username", self.get_argument("username"))
         self.redirect("/login")
         

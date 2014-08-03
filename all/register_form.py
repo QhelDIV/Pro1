@@ -1,4 +1,4 @@
-login_form="""
+register_form="""
 <form action="/register" method="post">
         <div class="form-group">
             <input autofocus class="form-control" name="username" placeholder="Username" type="text"/>
