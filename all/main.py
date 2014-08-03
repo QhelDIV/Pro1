@@ -1,26 +1,32 @@
-import tornado.ioloop
-import tornado.web
+import sys
+import torndb
 import function
-import torndb
-import torndb
+import tornado.web
 import mysql_config
+import tornado.ioloop
 from login_form import login_form
 class BaseHandler(tornado.web.RequestHandler):
+    def __init__(self, application, request, **kwargs):
+       tornado.web.RequestHandler.__init__(self,application, request, **kwargs)
+       if self.get_secure_cookie("username"):
+            self.redirect("/login")
     def get_current_username(self):
         return self.get_secure_cookie("username")
 
 class MainHandler(BaseHandler):
     def get(self):
-  #      for user in db.query("SELECT * FROM Users"):
-   #         self.write(user.Password)
+        for user in db.query("SELECT * FROM Users"):
+            self.write(user.Password)
         self.current_username=self.get_current_username()
         if not self.current_username:
             self.redirect("/login")
             return
-        name = tornado.escape.xhtml_escape(current_username)
+        name = tornado.escape.xhtml_escape(self.current_username)
         self.write("<p>Hello, " + self.current_username+"</p <br> <a href='/logout'>log out</a>")
 
 class LoginHandler(BaseHandler):
+    def __init__(self):
+        nothing='nothing'
     def get(self):
         self.write(function.render(login_form))
     def post(self):
@@ -42,32 +48,27 @@ class RegisterHandler(BaseHandler):
 class FileHandler(BaseHandler):
     def get(self,p1):
         try:
-            with open(r'/home/qheldiv/Documents/Pro1/all/'+str(p1),'rb') as f:
+            with open(sys.path[0]+"/"+str(p1),'rb') as f:
                 data=f.read()
                 self.write(data)
             self.finish()
         except IOError:
             self.send_error(404)
             print "File not found!!!!!!!!!!"
-class Application(tornado.web.Application):
-    def __init__(self):
-        handlers= [
-            (r"/", MainHandler),
-            (r"/login", LoginHandler),
-            (r"/logout",LogoutHandler),
-            (r"/register",RegisterHandler),
-            (r"/(.*)",FileHandler),
-            ]
-            settings = {
-                'cookie_secret':"63925114"
-            }
-# This is the phone number of number 5304 room in Henan Experimental highschool
+
+application = tornado.web.Application([
+(r"/", MainHandler),
+(r"/login", LoginHandler),
+(r"/logout",LogoutHandler),
+(r"/register",RegisterHandler),
+(r"/(.*)",FileHandler),
+], cookie_secret="63925114")# This is the phone number of number 5304 room in Henan Experimental highschool
 if __name__ == '__main__':
-    http_server = tornado.httpserver.HTTPServer(Application())
-    http_server.listen(8888)
-    #dab = torndb.Connection(host=mysql_config.host+":"+str(mysql_config.port),
-    #                       database=mysql_config.database,
-    #                       user=mysql_config.user,
-    #                       password=mysql_config.password,
-    #                       )
+    application.listen(8888)
+    db = torndb.Connection(host=mysql_config.host+":"+str(mysql_config.port),
+                            database=mysql_config.database,
+                            user=mysql_config.user,
+                            password=mysql_config.password,
+                            )
     tornado.ioloop.IOLoop.instance().start()
+
